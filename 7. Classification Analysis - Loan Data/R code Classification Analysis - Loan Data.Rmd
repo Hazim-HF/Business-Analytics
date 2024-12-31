@@ -1,0 +1,31 @@
+---
+title: "Classification"
+author: "Hazim Fitri"
+date: "2024-12-28"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 6
+geometry: margin=0.5cm
+---
+
+```{r}
+german_credit = read.csv('ori_data.csv')
+colnames(german_credit)
+```
+
+```{r}
+attach(german_credit)
+summary(Duration.of.Credit..month.)
+```
+
+```{r}
+indexes = sample(1000, 500)
+traindata = german_credit[indexes,]
+testdata = german_credit[-indexes,]
+```
+
+```{r}
+head(traindata)
+head(testdata)
+```
