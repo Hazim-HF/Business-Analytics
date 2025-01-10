@@ -22,7 +22,7 @@ ui = fluidPage(
     # Insert title
     titlePanel('Try test')
     
-    # 
+    # Insert subtitle
     
 )
 
