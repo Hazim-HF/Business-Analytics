@@ -77,3 +77,12 @@ text(2012, mean_2012 + 10000, mean_2012)
 text(2013, mean_2013 + 10000, mean_2013)
 text(2013.85, max_mean_2013 + 10000, max_mean_2013)
 
+################################################################################
+
+rider = read.csv('Ch6_ridership_data_2011-2012.csv')
+head(rider)
+library(lubridate)
+year(rider$datetime)
+month(rider$datetime)
+library(dplyr)
+data = rider %>% group_by(year(rider$datetime)) %>% summarise(sum())

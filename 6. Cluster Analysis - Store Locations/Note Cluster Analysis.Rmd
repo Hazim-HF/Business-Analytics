@@ -5,11 +5,18 @@ output:
     toc: true
     toc_depth: 6
 date: "2024-12-21"
+geometry: margin=0.5cm
 ---
+
+Data mining = Process of gathering insight and detecting pattern from large data set.
+
+Partition = determine the number of group first then splits the set
+
+Cluster = build group based on similarity
 
 # K-means Clustering
 
-```{r}
+```{r read_file}
 stations = read.csv('Ch5_bike_station_locations.csv')
 two = kmeans(stations, 2)
 two
@@ -147,4 +154,26 @@ data=market %>% group_by(dend6) %>% summarise(min_age=min(age),
 label = c('old and rich','mid career with mid income', 'young and broke', 'pension', 'old and broke', 'Old Money')
 data$labels = label
 data
+```
+
+# Self exercise
+
+```{r}
+data = read.csv('Ch5_bike_station_locations.csv')
+summary(data)
+```
+
+```{r}
+plot(data$longitude, data$latitude, asp = 1)
+```
+
+```{r kmeans}
+set.seed(123)
+km = kmeans(data,3)
+km
+```
+
+```{r}
+clus = cbind(data, km$cluster)
+plot(clus$longitude, clus$latitude, col = km$cluster)
 ```
