@@ -1,0 +1,15 @@
+---
+title: "Data Cleaning"
+author: "Hazim Fitri"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 6
+geometry: margin=0.5cm
+---
+
+#### summarize-fix-convert-adapt
+
+```{r}
+raw_bikeshare_data
+```

@@ -1,0 +1,2 @@
+marketing <- read.csv(file.choose())
+str(marketing)

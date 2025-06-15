@@ -1,0 +1,25 @@
+Malam ni - time series & clustering analysis.
+Esok - classification & association rule.
+
+List of question
+Linear Regression:
+
+Time Series
+1. Page 152 : How to determine a good model givent the diagnostic (where to see the p-value)
+
+Cluster
+1. Apa beza partitioning(kmeans) & clustering(hierarchical)
+2. How to interpret page 116
+3. Ada tak function untuk generate graph optimal number of cluster on page 127
+4. Interpretation of output page 125
+5. How to find optimal number of cluster for hierarchical
+6. Prune tu apa?
+
+Classification
+1. How to get the p-value on page 11
+2. ROC curve interpretation
+3. foreign country tak guna?
+4. amik predictor yang mana
+5. page 13, kenapa predict 2 kali
+
+Association

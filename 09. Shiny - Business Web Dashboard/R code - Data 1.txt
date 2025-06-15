@@ -1,0 +1,53 @@
+# Packages ----
+library(shiny)  # Required to run any Shiny app
+library(ggplot2)  # For creating pretty plots
+library(dplyr)  # For filtering and manipulating data
+library(agridat)  # The package where the data comes from
+
+# Loading data ----
+revenue <- read.csv(file.choose())
+model <- lm(revenues ~ marketing_total, data = revenue)
+
+# ui.R ----
+ui <- 
+    fluidPage(
+        titlePanel("Revenue Prediction from Marketing Expenditures"),
+        sidebarLayout(
+            sidebarPanel(
+                sliderInput("spend", "Expenditure Level in $K:",
+                            min = 54, max = 481, value = 250)
+            ),
+            mainPanel(
+                plotOutput("prediction_plot")
+            )
+        )
+    )
+
+
+# server.R ----
+server <- function(input, output) {
+    output$prediction_plot <- renderPlot({
+        plot(revenue$marketing_total, revenue$revenues,
+             xlab = "Marketing Expenditures ($K)",
+             ylab = "Revenues ($K)")
+        abline(model, col = "blue")
+        newdata <- data.frame(marketing_total = input$spend)
+        pred <- predict.lm(model, newdata, interval = "predict")
+        points(c(rep(input$spend, 2)), c(pred[2], pred[3]),
+               pch = "-", cex = 2, col = "orange")
+        segments(input$spend, pred[2], input$spend, pred[3],
+                 col = "orange", lty = 2, lwd = 2)
+        points(input$spend, pred[1], pch = 19, col = "blue",
+               cex = 2)
+        text(54, 55, pos = 4, cex = 1.0,
+             paste0("Predicted revenues of $",
+                    round(pred[1], 2) * 1000,
+                    " range of {", round(pred[2], 2) * 1000,
+                    " to ", round(pred[3], 2) * 1000, "}"))
+    })
+             
+}
+
+
+# Run the app ----
+shinyApp(ui = ui, server = server)

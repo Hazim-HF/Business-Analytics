@@ -1,0 +1,145 @@
+---
+title: "Part B Final Exam Business Analytics (STQD 6134)"
+author: "Hazim Fitri (p152419)"
+date: "2025-02-16"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 6
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(DataCombine) #
+library(corrgram) #
+library(psych) #
+library(forecast) #
+library(dendextend) #
+library(ROCR) #
+library(tree) #
+library(arules)
+library(arulesViz)
+library(gmodels)
+```
+
+# i)
+
+Read the file into R
+
+```{r}
+# Since data and Rmarkdown on the same working directory
+trans = read.csv('online_transactions.csv')
+head(trans)
+```
+
+Data Pre-processing
+
+Firstly, we will check the number of missing value in the data.
+
+```{r}
+sum(is.na(trans))
+```
+
+```{r}
+sum(is.na(trans$TransactionID))
+```
+
+```{r}
+sum(is.na(trans$Item))
+```
+
+The output shows that there are a total of 12 missing value in the dataset. All of the missing values are from the item column and from there are no missing values from the transaction ID column. Then, we will remove all the missing values for the dataset.
+
+```{r}
+trans_rm_na = na.omit(trans)
+```
+
+Next, we will see if there is any duplicated data in the dataset.
+
+```{r}
+sum(duplicated(trans))
+```
+
+Then, we will remove all duplicated datat from the dataset.
+
+```{r}
+dup = duplicated(trans_rm_na)
+trans_rm_na_dup = trans_rm_na[-dup, ]
+```
+
+```{r}
+sum(is.na(trans_rm_na_dup))
+```
+
+The output shows that there are a total of 24 duplicated output in the dataset. This output is calculated is there is any row of data with the exact same transaction ID and item.
+
+Next, we will filter the dataset for item
+
+```{r}
+library(dplyr)
+grouped = trans_rm_na_dup %>% 
+  group_by(TransactionID)
+
+grouped
+```
+
+# ii)
+
+```{r}
+library(arules)
+trans_rm_na_dup$Item = as.factor(trans_rm_na_dup$Item)
+trans_rm_na_dup$TransactionID = as.factor(trans_rm_na_dup$TransactionID)
+str(trans_rm_na_dup)
+transaction = as(trans_rm_na_dup, 'transactions')
+transaction
+inspect(head(transaction))
+inspect(transaction)
+LIST(transaction)
+```
+
+# iii)
+
+```{r}
+rule = apriori(transaction, parameter = list(supp = 0.05, conf = 0.6))
+
+inspect(rule)
+```
+
+# iv)
+
+```{r}
+library(arules)
+sorted_rule = sort(rule, by = 'lift', decreasing = T)
+```
+
+# v)
+
+appendix
+
+```{r}
+trans
+it = numeric
+for (i in 1:20) {
+  if (trans[i, 1] == 1001) {
+    items = trans[i, 2]
+    it = cat(it, items, sep = ',')
+  }
+}
+```
+
+```{r}
+
+
+x = trans %>% 
+  group_by(TransactionID) %>% 
+  arrange(TransactionID) %>% filter(TransactionID == 1001)
+x
+for (i in nrow(x)) {
+  trans[i, 2+i] = x[i, 2]
+  
+}
+z = 'jai'
+trans[5, 3] = cat(trans[5, 3], z, sep = ',')
+```

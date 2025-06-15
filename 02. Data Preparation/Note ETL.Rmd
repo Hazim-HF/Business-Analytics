@@ -1,0 +1,131 @@
+---
+title: "ETL"
+author: "Hazim Fitri"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 6
+geometry: margin=0.5cm
+---
+
+```{r}
+# see working directory
+getwd()
+
+# set working directory
+setwd('F:/Business-Analytics/02. Data Preparation/Data')
+
+# read csv file using read.csv()
+# by default: header = T, sep = ','
+bike = read.csv('Ch1_bike_sharing_data.csv')
+```
+
+```{r}
+# see structure of a data
+str(bike)
+```
+
+```{r}
+# read csv file using read.table()
+# by default: header = F, sep = ''
+bike = read.table('Ch1_bike_sharing_data.csv', sep = ',',
+                header = T)
+getwd()
+```
+
+```{r}
+# to learn more about dplyr package
+browseVignettes(package = "dplyr")
+```
+
+#### Filtering data rows
+
+![Logical Operators in the R Environment](logical%20operator%20in%20r)
+
+![]()
+
+```{r}
+# load dplyr pacakage
+library(dplyr)
+
+# filter bike data for registered = 0 and season can be either 1 or 2
+extracted_rows = filter(bike, registered == 0,
+                        season == 1 | season == 2)
+
+# see the number of rows and columns in the data
+dim(extracted_rows)
+```
+
+```{r}
+# alternative way to filter data 
+using_membership = filter(bike, registered == 0,
+                          season %in% c(1,2))
+
+# check for identicality of 2 dataframe
+identical(extracted_rows, using_membership)
+```
+
+```{r}
+# select desired column
+# can remove a column by adding '-' before the column name
+extracted_columns = select(extracted_rows, season, casual)
+```
+
+```{r}
+# add column to a dataframe
+add_revenue = mutate(extracted_columns, revenue = casual * 5)
+```
+
+```{r}
+# group data
+grouped = group_by(add_revenue, season)
+
+# summarise group data
+report = summarise(grouped, sum(casual), sum(revenue))
+```
+
+```{r}
+# write data into csv file
+write.csv(report, 'reveneu_report.csv', row.names = F)
+
+# write data into txt file
+write.table(report, 'revenue_report.txt', sep = '\t',
+            row.names = F)
+```
+
+```{r}
+library(stringr)
+
+# Read the R Markdown file
+file_path <- "Note ETL.Rmd"
+content <- readLines(file_path)
+
+# Extract R code chunks (between ```{r} and ```)
+inside_chunk <- FALSE
+code_lines <- c()
+
+for (line in content) {
+  if (grepl("^```\\{r.*\\}$", line)) {
+    inside_chunk <- TRUE
+    next
+  } else if (grepl("^```$", line)) {
+    inside_chunk <- FALSE
+    next
+  }
+  if (inside_chunk) {
+    code_lines <- c(code_lines, line)
+  }
+}
+
+# Extract function names (words followed by '(')
+function_calls <- unique(unlist(regmatches(code_lines, gregexpr("\\b\\w+\\s*\\(",
+                                                                code_lines))))
+function_calls <- gsub("\\s*\\(", "", function_calls)  # Remove '('
+
+# Remove common keywords that are not functions
+common_keywords <- c("if", "for", "while", "function", "return", "library",
+                     "require")
+functions_used <- setdiff(function_calls, common_keywords)
+
+print(functions_used)
+```

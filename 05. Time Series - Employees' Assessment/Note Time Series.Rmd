@@ -1,0 +1,240 @@
+---
+title: "Time Series"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 6
+geometry: margin=0.5cm
+date: "2024-12-21"
+---
+
+Predict VS Forecast
+
+-   **Predict** : predict response based on other variables (linear regression)
+
+-   **Forecast** : forecast future values based on previous values (time series)
+
+Time series data can't be applied into linear regression model due to the seasonal fluctuations. Thus, the ability for make correct prediction will be poor.
+
+```{r}
+library(forecast)
+data("AirPassengers")
+plot(decompose(AirPassengers))
+```
+
+**Interpretation** :
+
+-   **Observed** : original data
+
+-   **Trend** : data after removing seasonal component
+
+-   **Seasonal** : data after removing trend component
+
+-   **Random** : data after removing both trend and seasonal component
+
+# Model Assumption
+
+**Stationary** is when the data has a **constant mean and variance.** If there is trend or seasonal component on the original data, that means you data is not stationary and require transformation by using differencing technique.
+
+We create a sample data to show how to use `diff()`
+
+```{r}
+seq_down <- seq(.625, .125, -0.125)
+seq_up <- seq(0, 1.5, 0.25)
+y <- c(seq_down, seq_up, seq_down + .75, seq_up + .75, seq_down + 1.5, 
+       seq_up + 1.5)
+
+par(mfrow = c(1, 3))
+plot(y, type = "b", ylim = c(-.1, 3))
+plot(diff(y), ylim = c(-.1, 3), xlim = c(0, 36))
+plot(diff(diff(y), lag = 12), ylim = c(-.1, 3), xlim = c(0, 36))
+par(mfrow = c(1, 1))
+```
+
+# Model Building
+
+3 elements in ARIMA:
+
+-   **AR** : Auto regressive (p) \| ACF slowly diminish or cycle and its PACF cut off under a significant line after a certain number of lags
+
+-   **I** : Integrated, differencing (d)
+
+-   **MA** : Moving average (q) \| PACF slowly diminish or cycle. ACF cut off under a significance line after a certain number of lags
+
+```{r}
+par(mfrow=c(1,2))
+acf(y)
+pacf(y)
+```
+
+```{r, warning=FALSE}
+library(lubridate) # year, month
+library(dplyr) # %>%
+library(forecast) # auto.arima
+```
+
+# Case Study
+
+## ETL
+
+```{r load_data}
+cycle = read.csv('./Data/Ch6_ridership_data_2011-2012.csv')
+str(data)
+```
+
+We can see that the data is in hourly data frame and we want to convert it into monthly data frame.
+
+```{r}
+library(dplyr)
+library(lubridate)
+
+cycle$datetime = as.Date(cycle$datetime, format = '%Y-%m-%d')
+
+str(cycle)
+
+monthly_ride = cycle %>% 
+  group_by(year = year(datetime), month = month(datetime)) %>%
+  summarise(riders = sum(count))
+```
+
+```{r}
+table(monthly_ride$year, monthly_ride$month)
+```
+
+```{r}
+riders = monthly_ride[,3]
+monthly = ts(riders, frequency = 12, start = c(2011,1))
+class(monthly)
+monthly
+```
+
+```{r}
+plot(decompose(monthly))
+```
+
+# Analyze time series manually
+
+```{r}
+plot(monthly)
+```
+
+By looking at the plot, we can see that there's a trend, so we need to differentiate 1 time, and there's also seasonality. So, we need to differentiate the second time but this time with a lag.
+
+```{r}
+y=diff(monthly)
+plot(y)
+```
+
+```{r}
+z=diff(diff(monthly), lag =12)
+plot(z)
+```
+
+Now, we can see that the data has become stationary (constant mean and variance). However, the second differencing does not appear to make the data more stationary. Thus the first differencing is already sufficient for this case. Next, we'll see the ACF and PACF plot.
+
+```{r}
+par(mfrow=c(1,2))
+acf(monthly)
+pacf(monthly)
+```
+
+Interpretation :
+
+-   **ACF** : Diminish slowly with a cycle. This suggests that the data is AR
+
+-   **PACF** : Cut off after the first lag. This suggest that the data is AR(1) with no seasonal component.
+
+Next step is to compare the results from a number of models. We can use **Akaike Information Criterion (AIC)** the lower the better
+
+from the plot, we can infer that pacf has AR(1) and MA(1) & MA(2) are potential.
+
+```{r}
+model1 = arima(monthly, c(1,0,0), seasonal=list(order=c(0,0,0)))
+model2 = arima(monthly, c(1,1,0), seasonal=list(order=c(0,0,0)))
+model3 = arima(monthly, c(2,1,0), seasonal=list(order=c(0,0,0)))
+model4 = arima(monthly, c(1,1,0), seasonal=list(order=c(0,1,0)))
+model5 = arima(monthly, c(0,1,1), seasonal=list(order=c(0,0,0)))
+
+aic = c(model1$aic, model2$aic, model3$aic, model4$aic, model5$aic)
+model = seq(1:5)
+df = data.frame(model, aic)
+df
+str(model1)
+```
+
+```{r, fig.height=10}
+tsdiag(model3)
+```
+
+```{r}
+str(auto.arima(monthly))
+par(mfrow=c(1,3))
+acf(monthly)
+hist(residuals(auto.arima(monthly)))
+```
+
+# Automatically using auto.arima function
+
+```{r}
+auto.arima(monthly)
+```
+
+# Forecasting
+
+```{r}
+yr_forecast = forecast(monthly, h=12)
+plot(yr_forecast)
+```
+
+Interpretation :
+
+-   Blue line : mean forecast
+
+-   Dark inner cone : 80% confidence interval
+
+-   Light outer cone : 90% confidence interval
+
+However, this is not a pretty forecast since it indicates that anything is possible within the next 12 months
+
+# TBAT
+
+This technique is more suitable when :
+
+1.  Small dataset
+2.  Frequency \> 24 (hourly)
+
+```{r}
+tbats(monthly)
+j=forecast(tbats(monthly), h=12)
+plot(j)
+```
+
+```{r}
+summary(j$mean)
+summary(j$upper)
+summary(j$lower)
+```
+
+```{r}
+mean_2011 = round(as.numeric(filter(monthly_ride, year == 2011) %>%
+			summarise(mean = mean(riders))), 0)
+mean_2012 = round(as.numeric(filter(monthly_ride, year == 2012) %>%
+			summarise(mean = mean(riders))), 0)
+mean_2013 = round(mean(j$mean),0)
+max_mean_2013 = round(max(j$mean),0)
+```
+
+```{r}
+plot(j)
+abline(h=max(j$mean), lty=2, col='blue')
+segments(2011, mean_2011, x1=2012, y1=mean_2011, col='darkgray', lty=2, lwd=2)
+segments(2012, mean_2012, x1=2013, y1=mean_2012, col='darkgray', lty=2, lwd=2)
+segments(2013, mean_2013, x1=2014, y1=mean_2013, col='darkgray', lty=2, lwd=2)
+
+text(2011.15, mean_2011 + 10000, mean_2011)
+text(2012, mean_2012 + 10000, mean_2012)
+text(2013, mean_2013 + 10000, mean_2013)
+text(2013.85, max_mean_2013 + 10000, max_mean_2013)
+```
+
+The middle parameter of {0,0} indicates that this technique is using AR(0) and MA(0)

@@ -1,0 +1,83 @@
+---
+title: "Association Rule"
+author: "Hazim Fitri"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 6
+geometry: margin=0.5cm
+---
+
+# ETL
+
+```{r, warning=FALSE}
+library(arules)
+
+# see all data in arules package
+data(package = 'arules')
+
+# load data
+data('Groceries')
+
+# see data class
+class(Groceries)
+```
+
+# EDA
+
+```{r}
+inspect(head(Groceries))
+LIST(head(Groceries))
+size(head(Groceries))
+```
+
+```{r}
+data = as(Groceries, 'transactions')
+data
+```
+
+```{r}
+itemFrequencyPlot(Groceries, topN=10)
+```
+
+# Model Training
+
+```{r}
+rules = apriori(data, parameter = list(supp=0.05, conf=0.1))
+inspect(rules)
+```
+
+```{r}
+head(rules)
+inspect(head(rules))
+```
+
+**Interpretation**
+
+-   Rule 1: {Bread} -\> {Butter}
+-   Support : 0.6 (60% of the transactions contain both bread and butter)
+-   Confidence : 0.8 (80% of the transactions that contain bread also contain butter)
+-   Lift : 2 (The likelihood of purchasing butter is 2 times higher if bread is bought)
+
+```{r}
+sorted_rules = sort(rules, by='lift', decreasing=TRUE)
+inspect(sorted_rules[1:5])
+```
+
+```{r}
+library(arulesViz)
+plot(sorted_rules)
+```
+
+Interpretation :
+
+```{r}
+plot(sorted_rules, method = 'graph')
+```
+
+Interpretation :
+
+```{r}
+plot(sorted_rules, method='paracoord')
+```
